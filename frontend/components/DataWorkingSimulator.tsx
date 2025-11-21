@@ -410,8 +410,8 @@ export default function DataWorkingSimulator() {
                   showgrid: true,
                   titlefont: { size: 11 }
                 },
-                showlegend: true,
-                margin: { l: 40, r: 20, b: 40, t: 40 },
+                legend: { orientation: 'h', y: -0.3 },
+                margin: { l: 40, r: 20, b: 80, t: 40 },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
                 font: { size: 10 }

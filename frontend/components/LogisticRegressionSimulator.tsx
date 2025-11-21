@@ -135,7 +135,9 @@ export default function LogisticRegressionSimulator() {
         xaxis: { title: 'Признак 1' },
         yaxis: { title: 'Признак 2' },
         hovermode: 'closest',
-        legend: { x: 0, y: 1 }
+        legend: { orientation: 'h', y: -0.2 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        margin: { l: 40, r: 20, b: 40, t: 40 }
       }}
       config={{ responsive: true }}
       style={{ width: '100%', height: '500px' }}
@@ -180,7 +182,10 @@ export default function LogisticRegressionSimulator() {
           title: 'Граница решений логистической регрессии',
           xaxis: { title: 'Признак 1' },
           yaxis: { title: 'Признак 2' },
-          hovermode: 'closest'
+          hovermode: 'closest',
+          legend: { orientation: 'h', y: -0.2 },
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          margin: { l: 40, r: 20, b: 40, t: 40 }
         }}
         config={{ responsive: true }}
         style={{ width: '100%', height: '500px' }}

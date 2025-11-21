@@ -314,6 +314,7 @@ export default function MLTaskTypesSimulator() {
                 },
                 showlegend: showLabels && selectedTask !== 'regression',
                 margin: { l: 40, r: 20, b: 40, t: 40 },
+                legend: { orientation: 'h', y: -0.2 },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
                 font: { size: 10 }
