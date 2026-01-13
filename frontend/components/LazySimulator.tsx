@@ -11,6 +11,8 @@ const KMeansClusteringSimulator = lazy(() => import('./KMeansClusteringSimulator
 const MetricsComparisonSimulator = lazy(() => import('./MetricsComparisonSimulator'))
 const MLTaskTypesSimulator = lazy(() => import('./MLTaskTypesSimulator'))
 const DataWorkingSimulator = lazy(() => import('./DataWorkingSimulator'))
+const OverfittingSimulator = lazy(() => import('./OverfittingSimulator'))
+const CustomerSegmentationSimulator = lazy(() => import('./CustomerSegmentationSimulator'))
 
 interface LazySimulatorProps {
   lessonId: number
@@ -61,40 +63,9 @@ const LazySimulator = memo(({ lessonId, title }: LazySimulatorProps) => {
       case 8:
         return <KMeansClusteringSimulator />
       case 7:
-        return (
-          <div className="p-6 text-center">
-            <p className="text-gray-600 mb-4">
-              Симулятор переобучения будет доступен в следующих обновлениях.
-              Пока что изучите теоретический материал урока.
-            </p>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Что такое переобучение?</h4>
-              <p className="text-sm text-gray-600">
-                Переобучение происходит, когда модель слишком хорошо подстраивается под обучающие данные,
-                включая шум и случайные флуктуации, что приводит к плохой обобщающей способности.
-              </p>
-            </div>
-          </div>
-        )
+        return <OverfittingSimulator />
       case 9:
-        return (
-          <div className="p-6 text-center">
-            <p className="text-gray-600 mb-4">
-              Практический проект: "Анализ данных клиентов" - это теоретический урок.
-              В следующих обновлениях будет добавлена интерактивная реализация проекта.
-            </p>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Что вы изучите:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• EDA (Разведочный анализ данных)</li>
-                <li>• Подготовка данных для ML</li>
-                <li>• Построение модели кластеризации</li>
-                <li>• Интерпретация результатов</li>
-                <li>• Бизнес-рекомендации</li>
-              </ul>
-            </div>
-          </div>
-        )
+        return <CustomerSegmentationSimulator />
       default:
         return null
     }
@@ -104,19 +75,6 @@ const LazySimulator = memo(({ lessonId, title }: LazySimulatorProps) => {
   
   if (!simulatorComponent) {
     return null
-  }
-
-  // Для статических компонентов (7, 9) не используем Suspense
-  if (lessonId === 7 || lessonId === 9) {
-    return (
-      <div className="card">
-        <div className="flex items-center mb-4">
-          <Play className="h-5 w-5 text-primary-600 mr-2" />
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        </div>
-        {simulatorComponent}
-      </div>
-    )
   }
 
   return (

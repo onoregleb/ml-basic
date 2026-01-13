@@ -8,9 +8,11 @@ interface Lesson {
   title: string
   description: string
   content: string
+  content_html?: string
   lesson_type: string
   order_index: number
   module_id: number
+  toc?: Array<{ level: number; text: string; id: string }>
 }
 
 interface UserProgress {
@@ -143,41 +145,11 @@ const LessonNavigation = memo(({
 })
 LessonNavigation.displayName = 'LessonNavigation'
 
-// Компонент содержания урока
-const TableOfContents = memo(({ content }: { content: string }) => {
-  const tableOfContents = useMemo(() => {
-    if (!content) return []
-    
-    const lines = content.split('\n')
-    const toc: Array<{ level: number; text: string; id: string }> = []
-    
-    lines.forEach(line => {
-      const trimmedLine = line.trim()
-      let level = 0
-      let text = ''
-      
-      if (trimmedLine.startsWith('### ')) {
-        level = 3
-        text = trimmedLine.slice(4).trim()
-      } else if (trimmedLine.startsWith('## ') && !trimmedLine.startsWith('### ')) {
-        level = 2
-        text = trimmedLine.slice(3).trim()
-      } else if (trimmedLine.startsWith('# ') && !trimmedLine.startsWith('## ')) {
-        level = 1
-        text = trimmedLine.slice(2).trim()
-      }
-      
-      if (level > 0 && text) {
-        const cleanText = text.replace(/[^\w\s\u0400-\u04FF]/g, '').trim()
-        const id = cleanText.toLowerCase().replace(/\s+/g, '-')
-        toc.push({ level, text, id })
-      }
-    })
-    
-    return toc
-  }, [content])
+// Компонент содержания урока (из backend toc)
+const TableOfContents = memo(({ toc }: { toc?: Array<{ level: number; text: string; id: string }> }) => {
+  const tableOfContents = useMemo(() => toc || [], [toc])
 
-  if (tableOfContents.length === 0) return null
+  if (!tableOfContents.length) return null
 
   return (
     <div className="card">
@@ -275,7 +247,7 @@ const LessonMeta = memo(({ lesson }: { lesson: Lesson }) => (
       <div className="flex justify-between">
         <span className="text-gray-600">Интерактивность:</span>
         <span className="font-medium">
-          {[1, 2, 3, 4, 5, 6, 8].includes(lesson?.id || 0) ? '✅ Есть симулятор' : '📖 Теория'}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].includes(lesson?.id || 0) ? '✅ Есть симулятор' : '📖 Теория'}
         </span>
       </div>
     </div>
@@ -348,7 +320,7 @@ const LessonSidebar = memo(({ lesson, progress, allLessons, onNavigateToLesson }
         allLessons={allLessons} 
         onNavigateToLesson={onNavigateToLesson} 
       />
-      <TableOfContents content={lesson.content} />
+      <TableOfContents toc={lesson.toc} />
       <RelatedLessons 
         lesson={lesson} 
         allLessons={allLessons} 

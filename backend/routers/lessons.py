@@ -5,8 +5,9 @@ from datetime import datetime
 
 from database import get_db
 from models import Lesson, User, UserProgress
-from schemas import Lesson as LessonSchema, UserProgress as UserProgressSchema
+from schemas import Lesson as LessonSchema, LessonDetail as LessonDetailSchema, LessonTocItem, UserProgress as UserProgressSchema
 from routers.auth import get_current_user
+from markdown_utils import markdown_to_sanitized_html
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ def get_user_progress(
     ).all()
     return progress
 
-@router.get("/{lesson_id}", response_model=LessonSchema)
+@router.get("/{lesson_id}", response_model=LessonDetailSchema)
 def get_lesson(
     lesson_id: int,
     db: Session = Depends(get_db)
@@ -48,7 +49,23 @@ def get_lesson(
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.is_active == True).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    return lesson
+
+    content_html, toc = markdown_to_sanitized_html(lesson.content)
+    toc_items = [LessonTocItem(level=i.level, text=i.text, id=i.id) for i in toc]
+
+    # Return all base lesson fields + rendered HTML.
+    return {
+        "id": lesson.id,
+        "title": lesson.title,
+        "description": lesson.description,
+        "content": lesson.content,  # keep for backward compatibility
+        "lesson_type": lesson.lesson_type,
+        "order_index": lesson.order_index,
+        "module_id": lesson.module_id,
+        "is_active": lesson.is_active,
+        "content_html": content_html,
+        "toc": toc_items,
+    }
 
 @router.post("/{lesson_id}/progress", response_model=UserProgressSchema)
 def update_progress(

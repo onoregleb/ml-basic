@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react'
 import { BookOpen } from 'lucide-react'
-import MarkdownRenderer from './MarkdownRenderer'
+import RichTextRenderer from './RichTextRenderer'
 import LazySimulator from './LazySimulator'
 
 interface Lesson {
@@ -10,9 +10,11 @@ interface Lesson {
   title: string
   description: string
   content: string
+  content_html?: string
   lesson_type: string
   order_index: number
   module_id: number
+  toc?: Array<{ level: number; text: string; id: string }>
 }
 
 interface LessonContentProps {
@@ -47,7 +49,7 @@ const LessonContent = memo(({ lesson }: LessonContentProps) => {
           <BookOpen className="h-5 w-5 text-primary-600 mr-2" />
           <h2 className="text-lg font-semibold text-gray-900">Теория</h2>
         </div>
-        <MarkdownRenderer content={lesson.content} />
+        <RichTextRenderer html={lesson.content_html || ''} />
       </div>
 
       {/* Интерактивные симуляторы */}

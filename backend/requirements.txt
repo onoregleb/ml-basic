@@ -5,6 +5,8 @@ alembic
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
+markdown
+bleach
 scikit-learn
 numpy
 pandas

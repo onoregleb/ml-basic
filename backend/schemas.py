@@ -45,6 +45,17 @@ class Lesson(LessonBase):
     class Config:
         from_attributes = True
 
+# Lesson detail (rich content)
+class LessonTocItem(BaseModel):
+    level: int
+    text: str
+    id: str
+
+class LessonDetail(Lesson):
+    # Sanitized HTML ready for rendering on the frontend
+    content_html: str
+    toc: List[LessonTocItem] = []
+
 # Question schemas
 class QuestionBase(BaseModel):
     question_text: str
@@ -150,3 +161,47 @@ class ClusteringResponse(BaseModel):
     centroids: List[List[float]]
     silhouette_score: float
     wcss: float
+
+# Overfitting simulator schemas
+class OverfittingParams(BaseModel):
+    n_samples: int = 120
+    noise: float = 0.3
+    max_degree: int = 12
+    alpha: float = 0.0  # Ridge regularization strength
+    test_size: float = 0.3
+    random_state: int = 42
+    selected_degree: int = 6
+
+class OverfittingResponse(BaseModel):
+    degrees: List[int]
+    train_mse: List[float]
+    val_mse: List[float]
+    x_train: List[float]
+    y_train: List[float]
+    x_val: List[float]
+    y_val: List[float]
+    x_curve: List[float]
+    y_true_curve: List[float]
+    y_pred_curve: List[float]
+    selected_degree: int
+
+# Customer segmentation simulator schemas
+class CustomerSegmentationParams(BaseModel):
+    n_customers: int = 300
+    n_clusters: int = 4
+    noise: float = 0.25
+    random_state: int = 42
+
+class ClusterProfile(BaseModel):
+    cluster: int
+    size: int
+    avg_age: float
+    avg_total_spent: float
+    avg_frequency: float
+    avg_recency: float
+
+class CustomerSegmentationResponse(BaseModel):
+    points_2d: List[List[float]]
+    labels: List[int]
+    centroids_2d: List[List[float]]
+    profiles: List[ClusterProfile]

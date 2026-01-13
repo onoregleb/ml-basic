@@ -11,7 +11,19 @@ import json
 
 from database import get_db
 from models import User
-from schemas import LinearRegressionParams, LinearRegressionResponse, ClassificationParams, ClassificationResponse, ClusteringParams, ClusteringResponse
+from schemas import (
+    LinearRegressionParams,
+    LinearRegressionResponse,
+    ClassificationParams,
+    ClassificationResponse,
+    ClusteringParams,
+    ClusteringResponse,
+    OverfittingParams,
+    OverfittingResponse,
+    CustomerSegmentationParams,
+    CustomerSegmentationResponse,
+    ClusterProfile,
+)
 from routers.auth import get_current_user
 
 router = APIRouter()
@@ -384,3 +396,150 @@ async def metrics_comparison_simulator(
         })
 
     return {"scenarios": scenarios}
+
+
+@router.post("/overfitting", response_model=OverfittingResponse)
+async def overfitting_simulator(
+    params: OverfittingParams,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Симулятор переобучения: показывает train/val MSE при росте сложности модели (degree)
+    и визуализирует предсказания выбранной сложности.
+    """
+    from sklearn.preprocessing import PolynomialFeatures
+    from sklearn.pipeline import make_pipeline
+    from sklearn.linear_model import Ridge
+
+    rng = np.random.RandomState(params.random_state)
+    n = max(30, int(params.n_samples))
+    noise = float(max(0.0, params.noise))
+
+    # Synthetic non-linear regression data
+    x = rng.uniform(-3.0, 3.0, size=n)
+    x = np.sort(x)
+    y_true = np.sin(x) + 0.2 * x
+    y = y_true + rng.normal(0.0, noise, size=n)
+
+    x_train, x_val, y_train, y_val = train_test_split(
+        x, y, test_size=float(params.test_size), random_state=params.random_state
+    )
+
+    max_degree = int(np.clip(params.max_degree, 2, 20))
+    degrees = list(range(1, max_degree + 1))
+    train_mse: list[float] = []
+    val_mse: list[float] = []
+
+    alpha = float(max(0.0, params.alpha))
+
+    for d in degrees:
+        model = make_pipeline(
+            PolynomialFeatures(degree=d, include_bias=False),
+            Ridge(alpha=alpha, random_state=params.random_state),
+        )
+        model.fit(x_train.reshape(-1, 1), y_train)
+        y_pred_train = model.predict(x_train.reshape(-1, 1))
+        y_pred_val = model.predict(x_val.reshape(-1, 1))
+        train_mse.append(float(mean_squared_error(y_train, y_pred_train)))
+        val_mse.append(float(mean_squared_error(y_val, y_pred_val)))
+
+    selected_degree = int(np.clip(params.selected_degree, 1, max_degree))
+    selected_model = make_pipeline(
+        PolynomialFeatures(degree=selected_degree, include_bias=False),
+        Ridge(alpha=alpha, random_state=params.random_state),
+    )
+    selected_model.fit(x_train.reshape(-1, 1), y_train)
+
+    x_curve = np.linspace(-3.0, 3.0, 200)
+    y_true_curve = np.sin(x_curve) + 0.2 * x_curve
+    y_pred_curve = selected_model.predict(x_curve.reshape(-1, 1))
+
+    return OverfittingResponse(
+        degrees=degrees,
+        train_mse=train_mse,
+        val_mse=val_mse,
+        x_train=x_train.tolist(),
+        y_train=y_train.tolist(),
+        x_val=x_val.tolist(),
+        y_val=y_val.tolist(),
+        x_curve=x_curve.tolist(),
+        y_true_curve=y_true_curve.tolist(),
+        y_pred_curve=y_pred_curve.tolist(),
+        selected_degree=selected_degree,
+    )
+
+
+@router.post("/customer-segmentation", response_model=CustomerSegmentationResponse)
+async def customer_segmentation_simulator(
+    params: CustomerSegmentationParams,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Мини-проект: синтетический датасет клиентов + кластеризация + профили сегментов.
+    """
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+
+    rng = np.random.RandomState(params.random_state)
+    n = int(np.clip(params.n_customers, 100, 2000))
+    k = int(np.clip(params.n_clusters, 2, 10))
+    noise = float(max(0.0, params.noise))
+
+    # Generate synthetic customer features:
+    # age, total_spent, frequency, recency
+    # Create k latent groups with different centers.
+    centers = []
+    for i in range(k):
+        centers.append(
+            [
+                rng.uniform(18, 65),          # age
+                rng.uniform(200, 5000),       # total_spent
+                rng.uniform(1, 20),           # frequency
+                rng.uniform(1, 180),          # recency (days)
+            ]
+        )
+    centers = np.array(centers)
+
+    labels = rng.randint(0, k, size=n)
+    X = centers[labels] + rng.normal(0.0, noise, size=(n, 4)) * np.array([8.0, 800.0, 3.0, 35.0])
+
+    # Fit KMeans on scaled data
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    kmeans = KMeans(n_clusters=k, random_state=params.random_state, n_init=10)
+    pred_labels = kmeans.fit_predict(X_scaled)
+
+    # 2D projection for visualization
+    pca = PCA(n_components=2, random_state=params.random_state)
+    X_2d = pca.fit_transform(X_scaled)
+    centroids_2d = pca.transform(kmeans.cluster_centers_)
+
+    profiles: list[ClusterProfile] = []
+    for cluster in range(k):
+        mask = pred_labels == cluster
+        size = int(mask.sum())
+        if size == 0:
+            continue
+        cluster_data = X[mask]
+        profiles.append(
+            ClusterProfile(
+                cluster=int(cluster),
+                size=size,
+                avg_age=float(cluster_data[:, 0].mean()),
+                avg_total_spent=float(cluster_data[:, 1].mean()),
+                avg_frequency=float(cluster_data[:, 2].mean()),
+                avg_recency=float(cluster_data[:, 3].mean()),
+            )
+        )
+
+    # Sort for stable UI
+    profiles.sort(key=lambda p: p.cluster)
+
+    return CustomerSegmentationResponse(
+        points_2d=X_2d.tolist(),
+        labels=pred_labels.tolist(),
+        centroids_2d=centroids_2d.tolist(),
+        profiles=profiles,
+    )

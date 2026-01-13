@@ -34,9 +34,11 @@ interface Lesson {
   title: string
   description: string
   content: string
+  content_html?: string
   lesson_type: string
   order_index: number
   module_id: number
+  toc?: Array<{ level: number; text: string; id: string }>
 }
 
 interface UserProgress {
