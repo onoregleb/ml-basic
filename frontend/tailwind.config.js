@@ -21,7 +21,19 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: [
+          'Inter',
+          'system-ui',
+          '-apple-system',
+          "'Segoe UI'",
+          'Roboto',
+          'Arial',
+          "'Segoe UI Emoji'",
+          "'Segoe UI Symbol'",
+          "'Apple Color Emoji'",
+          "'Noto Color Emoji'",
+          'sans-serif'
+        ],
       },
     },
   },

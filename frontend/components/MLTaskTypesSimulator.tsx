@@ -304,17 +304,20 @@ export default function MLTaskTypesSimulator() {
                   title: 'Признак 1',
                   showgrid: true,
                   zeroline: false,
-                  titlefont: { size: 11 }
+                  titlefont: { size: 11 },
+                  title: { text: 'Признак 1', standoff: 18 }
                 },
                 yaxis: { 
                   title: 'Признак 2',
                   showgrid: true,
                   zeroline: false,
-                  titlefont: { size: 11 }
+                  titlefont: { size: 11 },
+                  title: { text: 'Признак 2', standoff: 18 }
                 },
                 showlegend: showLabels && selectedTask !== 'regression',
-                margin: { l: 40, r: 20, b: 40, t: 40 },
-                legend: { orientation: 'h', y: -0.2 },
+                // Extra bottom margin so the legend never overlaps x-axis title
+                margin: { l: 50, r: 20, b: 80, t: 40 },
+                legend: { orientation: 'h', y: -0.35 },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
                 font: { size: 10 }

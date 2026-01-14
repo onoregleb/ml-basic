@@ -57,12 +57,28 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, 'Segoe UI Emoji',
+      'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   }
   
   body {
     @apply bg-gray-50 text-gray-900;
   }
+}
+
+/* Typography tweaks for lesson rich text */
+.prose :not(pre) > code {
+  background: rgb(243 244 246); /* gray-100 */
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  color: rgb(17 24 39); /* gray-900 */
+}
+
+.prose pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
 
 @layer components {
