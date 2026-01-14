@@ -141,7 +141,7 @@ export default function LinearRegressionSimulator() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 min-h-[2.5rem]">
               Наклон (Slope)
             </label>
             <input
@@ -157,7 +157,7 @@ export default function LinearRegressionSimulator() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 min-h-[2.5rem]">
               Пересечение (Intercept)
             </label>
             <input
@@ -173,7 +173,7 @@ export default function LinearRegressionSimulator() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 min-h-[2.5rem]">
               Уровень шума
             </label>
             <input
@@ -189,7 +189,7 @@ export default function LinearRegressionSimulator() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 min-h-[2.5rem]">
               Количество точек
             </label>
             <input

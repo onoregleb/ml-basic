@@ -30,7 +30,20 @@ def _slugify_heading(text: str) -> str:
 def _normalize_markdown(text: str) -> str:
     # init_db.py stores triple-quoted strings indented with code;
     # dedent prevents the markdown renderer from treating most text as code blocks.
-    return textwrap.dedent(text or "").strip()
+    normalized = textwrap.dedent(text or "").strip()
+
+    # Harden fenced blocks: markdown requires fences to start at column 0–3.
+    # Some seeded text may still contain extra indentation around the fence line,
+    # which can lead to literal ``` being shown.
+    fixed_lines: list[str] = []
+    for line in normalized.splitlines():
+        lstripped = line.lstrip()
+        if lstripped.startswith("```"):
+            fixed_lines.append(lstripped)
+        else:
+            fixed_lines.append(line)
+
+    return "\n".join(fixed_lines)
 
 
 def inject_heading_ids_and_extract_toc(markdown_text: str) -> Tuple[str, List[TocItem]]:

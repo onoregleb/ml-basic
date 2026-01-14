@@ -36,10 +36,13 @@ export default function MetricsComparisonSimulator() {
     fetchData()
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = async (seed?: number) => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8000/api/ml/metrics-comparison', {
+      const url = seed
+        ? `http://localhost:8000/api/ml/metrics-comparison?seed=${seed}`
+        : 'http://localhost:8000/api/ml/metrics-comparison'
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         }
@@ -280,12 +283,12 @@ export default function MetricsComparisonSimulator() {
             Анализ метрик
           </h3>
           <button
-            onClick={fetchData}
+            onClick={() => fetchData(Date.now())}
             disabled={isLoading}
             className="btn-secondary text-sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Обновить
+            Сгенерировать новые сценарии
           </button>
         </div>
       </div>

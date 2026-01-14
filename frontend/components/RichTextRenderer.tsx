@@ -14,8 +14,8 @@ const RichTextRenderer = memo(({ html }: RichTextRendererProps) => {
         // Improve code blocks readability
         'prose-pre:bg-gray-900 prose-pre:text-gray-100',
         'prose-pre:rounded-lg prose-pre:px-4 prose-pre:py-3',
-        'prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded',
-        // Remove default backticks around inline code from typography
+        // Keep typography backticks disabled; inline-code styling is applied in CSS
+        // in a way that does NOT affect pre > code.
         'prose-code:before:content-none prose-code:after:content-none',
         // Better spacing for headings
         'prose-headings:scroll-mt-24',

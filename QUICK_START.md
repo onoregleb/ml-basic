@@ -49,17 +49,3 @@ npm run dev
 - **Backend API:** http://localhost:8000
 - **API документация:** http://localhost:8000/docs
 
-## Первые шаги
-
-1. Зарегистрируйтесь на `/register`
-2. Войдите в систему на `/login`
-3. Начните изучение с первого урока
-4. Экспериментируйте с интерактивными симуляторами
-
-## Структура
-```
-├── backend/        # FastAPI + SQLite
-├── frontend/       # Next.js + Tailwind CSS
-```
-
-Подробную документацию смотрите в `SETUP.md`

@@ -333,7 +333,8 @@ async def kmeans_clustering_simulator(
 @router.get("/metrics-comparison")
 async def metrics_comparison_simulator(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    seed: int = None
 ):
     """
     Сравнение метрик качества на разных датасетах
@@ -342,22 +343,23 @@ async def metrics_comparison_simulator(
     scenarios = []
 
     for i in range(3):
+        rs = (seed if seed is not None else 42) + i
         # Генерируем сбалансированные данные
         X_balanced, y_balanced = make_classification(
             n_samples=200, n_features=2, n_classes=2,
             n_informative=2, n_redundant=0, n_clusters_per_class=1,
-            weights=[0.5, 0.5], random_state=42 + i
+            weights=[0.5, 0.5], random_state=rs
         )
 
         # Генерируем несбалансированные данные
         X_imbalanced, y_imbalanced = make_classification(
             n_samples=200, n_features=2, n_classes=2,
             n_informative=2, n_redundant=0, n_clusters_per_class=1,
-            weights=[0.9, 0.1], random_state=42 + i
+            weights=[0.9, 0.1], random_state=rs
         )
 
         # Обучаем простую модель
-        model = LogisticRegression(random_state=42 + i)
+        model = LogisticRegression(random_state=rs)
 
         # Оцениваем на сбалансированных данных
         model.fit(X_balanced[:150], y_balanced[:150])

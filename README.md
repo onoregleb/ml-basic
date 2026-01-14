@@ -1,83 +1,85 @@
 # ML Interactive Course
 
-Интерактивный курс по машинному обучению с практическими симуляторами и заданиями.
+RU: Интерактивный курс по машинному обучению с теорией, прогрессом и симуляторами.
 
-## 🚀 Технологии
+EN: An interactive machine learning course with theory, progress tracking, and simulators.
+
+## 🚀 Технологии / Tech stack
 
 - **Backend**: FastAPI + SQLAlchemy + SQLite
-- **Frontend**: Next.js 14 + TypeScript + TailwindCSS
+- **Frontend**: Next.js 14 + TypeScript + TailwindCSS (+ Typography)
 - **ML**: scikit-learn + numpy + pandas
-- **Графики**: Plotly.js + D3.js
+- **Charts**: Plotly.js (+ react-plotly.js)
 
-## 📁 Структура проекта
+## 📁 Структура проекта / Project structure
 
 ```
-├── backend/          # FastAPI сервер
-├── frontend/         # Next.js приложение
-├── shared/           # Общие типы и утилиты
-└── docs/            # Документация
+├── backend/          # FastAPI server
+├── frontend/         # Next.js app
+├── PROJECT_COMPLETION_PLAN.md
+└── QUICK_START.md
 ```
 
-## 🔐 Аутентификация
+## 🔐 Аутентификация / Auth
 
-### Настройка
-1. Создайте `.env` файл в директории backend
-2. Добавьте секретный ключ:
-```
-JWT_SECRET=your_secret_key
-```
+RU: JWT-аутентификация реализована. **Важно:** `backend/routers/auth.py` содержит дефолтный `SECRET_KEY` — поменяйте его перед продакшеном.
 
-### Frontend настройка
-```bash
-# В frontend/.env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+EN: JWT auth is implemented. **Important:** `backend/routers/auth.py` has a default `SECRET_KEY` — change it before production.
 
-Для использования абсолютных путей импорта (например, `@/components/*`), убедитесь, что в файле `frontend/tsconfig.json` есть следующие настройки:
-```json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  }
-}
-```
-
-## 🛠️ Установка и запуск
+## 🛠️ Установка и запуск / Install & run
 
 ### Backend
+
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --reload
+python init_db.py
+uvicorn main:app --reload --port 8000
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## 📚 Модули курса
+RU: Открыть `http://localhost:3000` (Frontend) и `http://localhost:8000/docs` (Swagger).
 
-1. **Введение в ML** - основы и примеры
-2. **Работа с данными** - типы данных и визуализация
-3. **Линейная регрессия** - первый алгоритм с интерактивом
-4. **Классификация** - логистическая регрессия и kNN
-5. **Метрики качества** - оценка моделей
-6. **Overfitting** - регуляризация и валидация
-7. **Кластеризация** - k-means алгоритм
-8. **Мини-проект** - практическое применение
+EN: Open `http://localhost:3000` (Frontend) and `http://localhost:8000/docs` (Swagger).
 
-## 🎯 Текущий статус
+## 📚 Уроки / Lessons (9)
 
-- [x] Структура проекта
-- [ ] Backend API
-- [ ] Frontend интерфейс
-- [ ] Интерактивные симуляторы
-- [ ] Система прогресса
-- [ ] Деплой
+1. Введение в ML (симулятор типов задач)
+2. Работа с данными (симулятор подготовки/визуализации)
+3. Линейная регрессия (симулятор + метрики)
+4. Логистическая регрессия (классификация)
+5. kNN
+6. Метрики качества (генерация сценариев + сравнение)
+7. Переобучение (train/val error)
+8. K-means
+9. Мини‑проект: сегментация клиентов (интерактив)
 
+## 🧾 Контент уроков / Lesson content rendering
+
+RU: Контент хранится как текст в БД, но при запросе урока backend возвращает **sanitized HTML + TOC** (`content_html`, `toc`). Это улучшает отображение формул/кода и оглавления.
+
+EN: Content is stored as text in DB, but lesson details return **sanitized HTML + TOC** (`content_html`, `toc`) to improve rendering and navigation.
+
+## ⚠️ Важно / Notes
+
+- **RU:** `python init_db.py` очищает и пересоздаёт уроки/вопросы (пересид). Используйте после правок `backend/init_db.py`.
+- **EN:** `python init_db.py` clears and reseeds lessons/questions. Run it after changing `backend/init_db.py`.
+
+## 🎯 Текущий статус / Status
+
+- [x] Структура проекта / Project structure
+- [x] Backend API (lessons + progress + simulators)
+- [x] Frontend интерфейс (login/dashboard/lesson pages)
+- [x] Интерактивные симуляторы (уроки 1–9)
+- [x] Базовая система прогресса
+- [ ] Квизы/викторины (проверка ответов + начисление баллов)
+- [ ] Мини‑проект уровня “платформа” (скачивание данных, загрузка результатов, автопроверка/LLM)
+- [ ] Тесты (unit/e2e)
+- [ ] Деплой (Docker/CI-CD)
