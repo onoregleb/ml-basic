@@ -65,7 +65,7 @@ const LazySimulator = memo(({ lessonId, title }: LazySimulatorProps) => {
       case 7:
         return <OverfittingSimulator />
       case 9:
-        return <CustomerSegmentationSimulator />
+        return <LinearRegressionSimulator />
       default:
         return null
     }

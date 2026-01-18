@@ -171,7 +171,7 @@ export default function OptimizedLessonPage() {
       const relatedLessonIds = typedAllLessons
         .filter(l => l.module_id === typedLesson.module_id && l.id !== typedLesson.id)
         .slice(0, 3) // Предзагружаем только 3 ближайших урока
-        .map(l => `http://localhost:8000/api/lessons/${l.id}`)
+        .map(l => `/api/lessons/${l.id}`)
       
       if (relatedLessonIds.length > 0) {
         prefetchData(relatedLessonIds, { cacheTTL: 10 * 60 * 1000 })

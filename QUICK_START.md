@@ -49,6 +49,32 @@ npm run dev
 - **Backend API:** http://localhost:8000
 - **API документация:** http://localhost:8000/docs
 
+## Docker (деплой “как на компьютере”)
+
+В корне проекта есть `docker-compose.yml`.
+
+### Запуск
+
+```bash
+docker compose up -d --build
+```
+
+Откройте:
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8000
+
+### Инициализация БД (один раз, вручную)
+
+Сидинг уроков сейчас делает `init_db.py` (он очищает и пересоздаёт данные), поэтому запускайте его **по необходимости**:
+
+```bash
+docker compose run --rm backend python init_db.py
+```
+
+### Ограничения ресурсов
+
+В `docker-compose.yml` уже заданы лимиты под сервер **4 vCPU / 8GB RAM** (backend ~3 CPU/6GB, frontend ~1 CPU/2GB).
+
 ## Проверка финального проекта через GigaChat (опционально)
 
 Чтобы работала кнопка проверки проекта в уроке 9, добавьте в `backend/.env`:

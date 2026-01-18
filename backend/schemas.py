@@ -234,3 +234,19 @@ class ProjectCheckResponse(BaseModel):
     result: Optional[ProjectCheckResult] = None
     model_text: Optional[str] = None  # raw assistant message (fallback)
     error: Optional[str] = None
+
+
+class RegressionProjectMetrics(BaseModel):
+    r2: float
+    rmse: float
+    n_test: int
+    n_pred: int
+
+
+class RegressionProjectCheckResponse(BaseModel):
+    ok: bool
+    passed: bool
+    score: int
+    metrics: Optional[RegressionProjectMetrics] = None
+    llm: Optional[ProjectCheckResponse] = None
+    error: Optional[str] = None

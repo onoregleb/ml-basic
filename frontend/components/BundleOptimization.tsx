@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ComponentType } from 'react'
 
 // Динамически импортируем тяжелые компоненты только при необходимости
 const Plot = lazy(() => 
@@ -24,16 +24,15 @@ const PlotFallback = () => (
 
 // HOC для lazy loading тяжелых компонентов
 export const withLazyLoading = <P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: React.ComponentType
+  Component: ComponentType<P>,
+  FallbackComponent?: ComponentType
 ) => {
-  const LazyComponent = lazy(() => 
-    Promise.resolve({ default: Component })
-  )
+  const LazyComponent = lazy(() => Promise.resolve({ default: Component as ComponentType<any> }))
+  const Fallback = FallbackComponent ?? (() => <div>Загрузка...</div>)
   
   return (props: P) => (
-    <Suspense fallback={fallback ? <fallback /> : <div>Загрузка...</div>}>
-      <LazyComponent {...props} />
+    <Suspense fallback={<Fallback />}>
+      <LazyComponent {...(props as any)} />
     </Suspense>
   )
 }

@@ -44,7 +44,7 @@ export default function CustomerSegmentationSimulator() {
     async function fetchData() {
       try {
         setLoading(true)
-        const resp = await fetch('http://localhost:8000/api/ml/customer-segmentation', {
+        const resp = await fetch('/api/ml/customer-segmentation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

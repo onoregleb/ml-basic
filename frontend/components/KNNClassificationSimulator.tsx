@@ -52,7 +52,7 @@ export default function KNNClassificationSimulator() {
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`http://localhost:8000/api/ml/knn-classification?k=${k}`, {
+      const response = await fetch(`/api/ml/knn-classification?k=${k}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

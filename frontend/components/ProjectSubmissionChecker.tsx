@@ -2,41 +2,62 @@
 
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle2, Download, Loader2, Upload, XCircle } from 'lucide-react'
 
-type ProjectCheckResponse = {
+type RegressionProjectCheckResponse = {
   ok: boolean
-  result?: {
-    score: number
-    passed: boolean
-    summary: string
-    strengths: string[]
-    improvements: string[]
-    rubric: {
-      data_and_features: number
-      model_choice: number
-      k_selection: number
-      segment_interpretation: number
-      business_recommendations: number
-    }
+  passed: boolean
+  score: number
+  metrics?: { r2: number; rmse: number; n_test: number; n_pred: number } | null
+  llm?: {
+    ok: boolean
+    result?: { summary: string; strengths: string[]; improvements: string[] } | null
+    model_text?: string | null
+    error?: string | null
   } | null
-  model_text?: string | null
   error?: string | null
 }
 
-export default function ProjectSubmissionChecker({ lessonId }: { lessonId: number }) {
-  const [submissionText, setSubmissionText] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [response, setResponse] = useState<ProjectCheckResponse | null>(null)
+function downloadBlob(filename: string, contentType: string, data: BlobPart) {
+  const blob = new Blob([data], { type: contentType })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
 
-  const minLen = 50
-  const trimmedLen = useMemo(() => submissionText.trim().length, [submissionText])
-  const canSubmit = useMemo(() => trimmedLen >= minLen && !loading, [trimmedLen, loading])
+export default function ProjectSubmissionChecker({ lessonId }: { lessonId: number }) {
+  const [predFile, setPredFile] = useState<File | null>(null)
+  const [codeFile, setCodeFile] = useState<File | null>(null)
+  const [reportText, setReportText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [response, setResponse] = useState<RegressionProjectCheckResponse | null>(null)
+
+  const canSubmit = useMemo(() => !!predFile && !loading, [predFile, loading])
+
+  async function handleDownload(split: 'train' | 'test') {
+    try {
+      const token = localStorage.getItem('token')
+      const resp = await fetch(`/api/lessons/${lessonId}/project/dataset/${split}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : '' },
+      })
+      if (!resp.ok) throw new Error('Не удалось скачать датасет')
+      const text = await resp.text()
+      downloadBlob(`project_${split}.csv`, 'text/csv;charset=utf-8', text)
+    } catch (e) {
+      console.error(e)
+      toast.error('Ошибка скачивания данных')
+    }
+  }
 
   async function handleCheck() {
     if (loading) return
-    if (trimmedLen < minLen) {
-      toast.error(`Слишком короткий ответ: минимум ${minLen} символов`)
+    if (!predFile) {
+      toast.error('Загрузите predictions.csv')
       return
     }
 
@@ -45,16 +66,18 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
       setResponse(null)
 
       const token = localStorage.getItem('token')
-      const resp = await fetch(`http://localhost:8000/api/lessons/${lessonId}/project/check`, {
+      const form = new FormData()
+      form.append('predictions', predFile)
+      if (codeFile) form.append('code', codeFile)
+      if (reportText.trim()) form.append('report_text', reportText.trim())
+
+      const resp = await fetch(`/api/lessons/${lessonId}/project/check-upload`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
-        },
-        body: JSON.stringify({ submission_text: submissionText }),
+        headers: { Authorization: token ? `Bearer ${token}` : '' },
+        body: form,
       })
 
-      const json = (await resp.json()) as ProjectCheckResponse
+      const json = (await resp.json()) as RegressionProjectCheckResponse
       setResponse(json)
 
       if (!resp.ok || !json.ok) {
@@ -62,10 +85,10 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
         return
       }
 
-      if (json.result?.passed) {
-        toast.success('Проект принят! Прогресс обновлён.')
+      if (json.passed) {
+        toast.success('Проект принят по метрикам! Прогресс обновлён.')
       } else {
-        toast('Получен фидбек — доработайте и отправьте снова.')
+        toast('Пока не принят: улучшите качество и отправьте снова.')
       }
     } catch (e) {
       console.error(e)
@@ -75,20 +98,19 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
     }
   }
 
-  const passed = !!response?.result?.passed
-
   return (
     <div className="card">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Сдача проекта (проверка через GigaChat)</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Сдача проекта: регрессия (файлами)</h2>
           <p className="text-sm text-gray-600">
-            Вставьте отчёт/ответ по заданию (минимум 50 символов) и отправьте на проверку.
+            Скачайте данные, обучите модель, загрузите <span className="font-medium">predictions.csv</span> (id, y_pred) и
+            опционально код/отчёт — мы посчитаем метрики и дадим рекомендации через LLM.
           </p>
         </div>
-        {response?.ok && response?.result && (
+        {response?.ok && (
           <div className="flex items-center gap-2">
-            {passed ? (
+            {response.passed ? (
               <>
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <span className="text-sm font-medium text-green-700">Принято</span>
@@ -103,19 +125,53 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
         )}
       </div>
 
-      <textarea
-        value={submissionText}
-        onChange={(e) => setSubmissionText(e.target.value)}
-        placeholder={`Пример структуры:\n- Данные и признаки: ...\n- Предобработка: ...\n- Выбор модели и K: ...\n- Интерпретация сегментов: ...\n- Рекомендации и метрики эффекта: ...`}
-        className="w-full min-h-[180px] p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-      />
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button onClick={() => handleDownload('train')} className="btn-secondary inline-flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Скачать train.csv
+        </button>
+        <button onClick={() => handleDownload('test')} className="btn-secondary inline-flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Скачать test.csv
+        </button>
+      </div>
 
-      <div className="flex items-center justify-between mt-3 gap-3">
-        <span className="text-xs text-gray-500">
-          {trimmedLen} / {minLen} символов
-        </span>
-        <button onClick={handleCheck} disabled={loading} className="btn-primary inline-flex items-center gap-2">
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">predictions.csv (обязательно)</label>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => setPredFile(e.target.files?.[0] || null)}
+            className="w-full"
+          />
+          <p className="text-xs text-gray-500 mt-1">Колонки: id, y_pred</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Файл с кодом (опционально)</label>
+          <input
+            type="file"
+            accept=".py,.ipynb,.txt,.md,text/plain"
+            onChange={(e) => setCodeFile(e.target.files?.[0] || null)}
+            className="w-full"
+          />
+          <p className="text-xs text-gray-500 mt-1">Например: solution.py или notebook.ipynb</p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Краткий отчёт (опционально)</label>
+        <textarea
+          value={reportText}
+          onChange={(e) => setReportText(e.target.value)}
+          placeholder="Коротко: как обрабатывали пропуски, какие признаки/модель, как валидировали, что улучшить дальше..."
+          className="w-full min-h-[120px] p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+
+      <div className="flex items-center justify-end mt-3">
+        <button onClick={handleCheck} disabled={!canSubmit} className="btn-primary inline-flex items-center gap-2">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           Проверить
         </button>
       </div>
@@ -123,75 +179,48 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
       {response && (
         <div className="mt-5 space-y-4">
           {!response.ok && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-              {response.error || 'Ошибка проверки'}
+            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{response.error || 'Ошибка проверки'}</div>
+          )}
+
+          {response.ok && response.metrics && (
+            <div className="p-3 rounded-lg bg-gray-50 text-sm text-gray-800">
+              <div className="font-medium text-gray-900 mb-1">Метрики</div>
+              <div>R²: {response.metrics.r2.toFixed(4)}</div>
+              <div>RMSE: {response.metrics.rmse.toFixed(4)}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                Предсказаний: {response.metrics.n_pred}, тестовых строк: {response.metrics.n_test}
+              </div>
             </div>
           )}
 
-          {response.ok && response.result && (
+          {response.ok && response.llm && !response.llm.ok && (
+            <div className="p-3 rounded-lg bg-amber-50 text-amber-800 text-sm">
+              LLM недоступна: {response.llm.error || 'ошибка'}
+            </div>
+          )}
+
+          {response.ok && response.llm?.ok && response.llm.result && (
             <>
-              <div className="p-3 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium text-gray-900">Итог:</span> {response.result.summary}
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900">Score: {response.result.score}/100</div>
-                </div>
+              <div className="p-3 rounded-lg bg-gray-50 text-sm text-gray-800">
+                <span className="font-medium text-gray-900">Рекомендации:</span> {response.llm.result.summary}
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-600 border-b">
-                      <th className="py-2 pr-4">Критерий</th>
-                      <th className="py-2 pr-4">Баллы</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-2 pr-4 text-gray-700">Данные и признаки</td>
-                      <td className="py-2 pr-4 text-gray-900 font-medium">{response.result.rubric.data_and_features}/20</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 pr-4 text-gray-700">Выбор модели</td>
-                      <td className="py-2 pr-4 text-gray-900 font-medium">{response.result.rubric.model_choice}/20</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 pr-4 text-gray-700">Выбор K</td>
-                      <td className="py-2 pr-4 text-gray-900 font-medium">{response.result.rubric.k_selection}/20</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 pr-4 text-gray-700">Интерпретация сегментов</td>
-                      <td className="py-2 pr-4 text-gray-900 font-medium">
-                        {response.result.rubric.segment_interpretation}/20
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 pr-4 text-gray-700">Бизнес-рекомендации</td>
-                      <td className="py-2 pr-4 text-gray-900 font-medium">
-                        {response.result.rubric.business_recommendations}/20
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {!!response.result.strengths?.length && (
+              {!!response.llm.result.strengths?.length && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-2">Сильные стороны</h3>
                   <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                    {response.result.strengths.map((s, idx) => (
+                    {response.llm.result.strengths.map((s, idx) => (
                       <li key={idx}>{s}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {!!response.result.improvements?.length && (
+              {!!response.llm.result.improvements?.length && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-2">Что улучшить</h3>
                   <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                    {response.result.improvements.map((s, idx) => (
+                    {response.llm.result.improvements.map((s, idx) => (
                       <li key={idx}>{s}</li>
                     ))}
                   </ul>
@@ -200,9 +229,9 @@ export default function ProjectSubmissionChecker({ lessonId }: { lessonId: numbe
             </>
           )}
 
-          {response.ok && !response.result && response.model_text && (
+          {response.ok && response.llm?.ok && !response.llm.result && response.llm.model_text && (
             <div className="p-3 rounded-lg bg-gray-50 text-sm text-gray-700 whitespace-pre-wrap">
-              {response.model_text}
+              {response.llm.model_text}
             </div>
           )}
         </div>

@@ -85,7 +85,7 @@ export default function DashboardPage() {
       const token = localStorage.getItem('token')
       
       // Загружаем уроки (публичный эндпоинт, не требует токена)
-      const lessonsResponse = await fetch('http://localhost:8000/api/lessons/')
+      const lessonsResponse = await fetch('/api/lessons/')
       if (lessonsResponse.ok) {
         const lessonsData = await lessonsResponse.json()
         setLessons(lessonsData)
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           'Content-Type': 'application/json'
         }
 
-        const progressResponse = await fetch('http://localhost:8000/api/lessons/user/progress', { headers })
+        const progressResponse = await fetch('/api/lessons/user/progress', { headers })
         console.log('Progress response status:', progressResponse.status)
         
         if (progressResponse.ok) {

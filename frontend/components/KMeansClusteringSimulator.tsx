@@ -47,7 +47,7 @@ export default function KMeansClusteringSimulator() {
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8000/api/ml/kmeans-clustering', {
+      const response = await fetch('/api/ml/kmeans-clustering', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -42,7 +42,7 @@ export default function LinearRegressionSimulator() {
   const fetchExampleData = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8000/api/ml/linear-regression/example', {
+      const response = await fetch('/api/ml/linear-regression/example', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         }
@@ -65,7 +65,7 @@ export default function LinearRegressionSimulator() {
   const runSimulation = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8000/api/ml/linear-regression', {
+      const response = await fetch('/api/ml/linear-regression', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

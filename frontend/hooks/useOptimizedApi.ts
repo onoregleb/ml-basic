@@ -162,17 +162,17 @@ export function useOptimizedApi<T>(
 // Специализированные хуки для разных типов данных
 
 export function useLessonData(lessonId: number | null) {
-  const url = lessonId ? `http://localhost:8000/api/lessons/${lessonId}` : null
+  const url = lessonId ? `/api/lessons/${lessonId}` : null
   return useOptimizedApi(url, { cache: true, cacheTTL: 10 * 60 * 1000 }) // 10 минут кэш для урока
 }
 
 export function useProgressData(lessonId: number | null) {
-  const url = lessonId ? `http://localhost:8000/api/lessons/${lessonId}/progress` : null
+  const url = lessonId ? `/api/lessons/${lessonId}/progress` : null
   return useOptimizedApi(url, { cache: false }) // Прогресс не кэшируем
 }
 
 export function useAllLessons() {
-  return useOptimizedApi('http://localhost:8000/api/lessons', { 
+  return useOptimizedApi('/api/lessons', { 
     cache: true, 
     cacheTTL: 15 * 60 * 1000 // 15 минут кэш для списка уроков
   })
@@ -193,7 +193,7 @@ export function useUpdateProgress() {
 
     try {
       const token = localStorage.getItem('token')
-      const url = `http://localhost:8000/api/lessons/${lessonId}/progress?status=${status}&score=${score}`
+      const url = `/api/lessons/${lessonId}/progress?status=${status}&score=${score}`
       
       const response = await fetch(url, {
         method: 'POST',

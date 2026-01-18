@@ -173,7 +173,7 @@ export default function DataWorkingSimulator() {
         const normalPoints = processedData.filter(d => !d.isOutlier)
         const outlierPoints = processedData.filter(d => d.isOutlier)
         
-        const traces = [
+        const traces: any[] = [
           {
             x: normalPoints.map(d => d.feature1),
             y: normalPoints.map(d => d.feature2),

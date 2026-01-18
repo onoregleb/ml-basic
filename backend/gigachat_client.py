@@ -220,3 +220,83 @@ class GigaChatClient:
             "parsed": parsed,
         }
 
+    def review_regression_submission(
+        self,
+        assignment_text: str,
+        metrics_text: str,
+        artifacts_text: str,
+    ) -> dict[str, Any]:
+        """
+        Ask the model to provide actionable recommendations for a regression ML project.
+        Returns raw + parsed json when possible.
+        """
+        token = self._get_access_token()
+
+        system_prompt = (
+            "Ты — наставник по машинному обучению. "
+            "Проверь решение задачи регрессии, укажи ошибки (утечки, валидация, метрики, препроцессинг), "
+            "и дай конкретные рекомендации по улучшению. Верни JSON."
+        )
+        user_prompt = f"""
+ЗАДАНИЕ:
+{assignment_text}
+
+МЕТРИКИ (проверка сервера):
+{metrics_text}
+
+АРТЕФАКТЫ СТУДЕНТА (код/отчёт/описание):
+{artifacts_text}
+
+ПРАВИЛА ОТВЕТА:
+- Верни ТОЛЬКО валидный JSON без Markdown.
+- Формат:
+{{
+  "score": 0-100,
+  "passed": true|false,
+  "summary": "1-3 предложения",
+  "strengths": ["..."],
+  "improvements": ["..."],
+  "rubric": {{
+    "data_and_features": 0-20,
+    "model_choice": 0-20,
+    "k_selection": 0-20,
+    "segment_interpretation": 0-20,
+    "business_recommendations": 0-20
+  }}
+}}
+""".strip()
+
+        body = {
+            "model": self.config.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.2,
+            "max_tokens": 900,
+        }
+
+        resp = requests.post(
+            self.config.chat_completions_url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=body,
+            timeout=self.config.timeout_seconds,
+            verify=(self.config.ca_bundle or self.config.verify_ssl),
+        )
+        if not resp.ok:
+            raise GigaChatError(f"Chat completion failed: HTTP {resp.status_code}: {resp.text}")
+
+        payload = resp.json()
+        content: str = ""
+        try:
+            content = payload["choices"][0]["message"]["content"]
+        except Exception:
+            content = ""
+
+        parsed = _extract_json_object(content)
+        return {"raw": payload, "text": content, "parsed": parsed}
+

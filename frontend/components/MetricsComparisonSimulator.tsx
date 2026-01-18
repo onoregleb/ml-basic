@@ -40,8 +40,8 @@ export default function MetricsComparisonSimulator() {
     try {
       setIsLoading(true)
       const url = seed
-        ? `http://localhost:8000/api/ml/metrics-comparison?seed=${seed}`
-        : 'http://localhost:8000/api/ml/metrics-comparison'
+        ? `/api/ml/metrics-comparison?seed=${seed}`
+        : '/api/ml/metrics-comparison'
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

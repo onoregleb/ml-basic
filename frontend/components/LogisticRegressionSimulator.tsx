@@ -52,7 +52,7 @@ export default function LogisticRegressionSimulator() {
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8000/api/ml/logistic-regression', {
+      const response = await fetch('/api/ml/logistic-regression', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

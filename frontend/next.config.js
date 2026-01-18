@@ -43,7 +43,19 @@ const nextConfig = {
   poweredByHeader: false,
   
   // Генерация статических страниц где возможно
-  output: 'standalone'
+  output: 'standalone',
+
+  // Proxy API requests from frontend to backend:
+  // client code can call /api/... regardless of deployment host.
+  async rewrites() {
+    const backend = process.env.BACKEND_URL || 'http://localhost:8000'
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backend}/api/:path*`,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig

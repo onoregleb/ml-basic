@@ -301,18 +301,14 @@ export default function MLTaskTypesSimulator() {
                   font: { size: 14 }
                 },
                 xaxis: { 
-                  title: 'Признак 1',
                   showgrid: true,
                   zeroline: false,
-                  titlefont: { size: 11 },
-                  title: { text: 'Признак 1', standoff: 18 }
+                  title: { text: 'Признак 1', font: { size: 11 }, standoff: 18 }
                 },
                 yaxis: { 
-                  title: 'Признак 2',
                   showgrid: true,
                   zeroline: false,
-                  titlefont: { size: 11 },
-                  title: { text: 'Признак 2', standoff: 18 }
+                  title: { text: 'Признак 2', font: { size: 11 }, standoff: 18 }
                 },
                 showlegend: showLabels && selectedTask !== 'regression',
                 // Extra bottom margin so the legend never overlaps x-axis title

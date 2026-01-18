@@ -46,7 +46,7 @@ export default function OverfittingSimulator() {
     async function fetchData() {
       try {
         setLoading(true)
-        const resp = await fetch('http://localhost:8000/api/ml/overfitting', {
+        const resp = await fetch('/api/ml/overfitting', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
