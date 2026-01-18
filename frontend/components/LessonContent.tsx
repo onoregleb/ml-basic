@@ -4,6 +4,7 @@ import React, { memo } from 'react'
 import { BookOpen } from 'lucide-react'
 import RichTextRenderer from './RichTextRenderer'
 import LazySimulator from './LazySimulator'
+import ProjectSubmissionChecker from './ProjectSubmissionChecker'
 
 interface Lesson {
   id: number
@@ -40,6 +41,7 @@ const getSimulatorTitle = (lessonId: number): string => {
 
 const LessonContent = memo(({ lesson }: LessonContentProps) => {
   const hasSimulator = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(lesson.id)
+  const isFinalProject = lesson.id === 9
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -59,6 +61,9 @@ const LessonContent = memo(({ lesson }: LessonContentProps) => {
           title={getSimulatorTitle(lesson.id)}
         />
       )}
+
+      {/* Сдача проекта (только для финального урока) */}
+      {isFinalProject && <ProjectSubmissionChecker lessonId={lesson.id} />}
     </div>
   )
 })

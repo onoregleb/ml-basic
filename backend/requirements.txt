@@ -13,3 +13,4 @@ pandas
 plotly
 pydantic
 python-dotenv
+requests

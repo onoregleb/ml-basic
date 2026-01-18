@@ -205,3 +205,32 @@ class CustomerSegmentationResponse(BaseModel):
     labels: List[int]
     centroids_2d: List[List[float]]
     profiles: List[ClusterProfile]
+
+
+# Project checking (GigaChat) schemas
+class ProjectCheckRequest(BaseModel):
+    submission_text: str
+
+
+class ProjectRubric(BaseModel):
+    data_and_features: int
+    model_choice: int
+    k_selection: int
+    segment_interpretation: int
+    business_recommendations: int
+
+
+class ProjectCheckResult(BaseModel):
+    score: int
+    passed: bool
+    summary: str
+    strengths: List[str] = []
+    improvements: List[str] = []
+    rubric: ProjectRubric
+
+
+class ProjectCheckResponse(BaseModel):
+    ok: bool
+    result: Optional[ProjectCheckResult] = None
+    model_text: Optional[str] = None  # raw assistant message (fallback)
+    error: Optional[str] = None

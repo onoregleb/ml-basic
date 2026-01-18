@@ -4,11 +4,15 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import uvicorn
+from dotenv import load_dotenv
 
 from database import get_db, engine
 from models import Base
 from routers import auth, lessons, ml_simulator
 from schemas import Token
+
+# Load environment variables from .env (if present)
+load_dotenv()
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
