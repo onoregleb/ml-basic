@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Persist DB in a named volume
+      DATABASE_URL: "sqlite:////data/ml_course.db"
+      # You can also pass GigaChat vars here or via ./backend/.env
+    env_file:
+      - ./backend/.env
+    volumes:
+      - backend_data:/data
+    restart: unless-stopped
+    # Resource limits (target host: 4 vCPU / 8GB RAM total for the stack)
+    deploy:
+      resources:
+        limits:
+          cpus: "3.0"
+          memory: 6G
+    # Non-swarm compose limits (supported by many docker-compose installs)
+    cpus: 3.0
+    mem_limit: 6g
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Used by Next.js rewrites to proxy /api -> backend
+      BACKEND_URL: "http://backend:8000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    cpus: 1.0
+    mem_limit: 2g
+
+volumes:
+  backend_data:
+
