@@ -43,9 +43,6 @@ venv.bak/
 
 # Database
 *.db
-*.sqlite
-*.sqlite3
-ml_course.db
 
 # Logs
 logs/

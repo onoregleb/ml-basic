@@ -6,7 +6,7 @@
 
 ## 2) Формат
 
-- веб‑платформа (Next.js) + API (FastAPI) + БД прогресса (SQLite/SQLAlchemy).
+- веб‑платформа (Next.js) + API (FastAPI) + БД прогресса (PostgreSQL/SQLAlchemy).
 
 ## 3) Целевая аудитория
 

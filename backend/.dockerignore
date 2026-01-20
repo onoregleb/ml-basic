@@ -4,5 +4,4 @@ venv
 .venv
 .pytest_cache
 .mypy_cache
-ml_course.db
 *.db

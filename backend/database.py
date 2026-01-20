@@ -3,17 +3,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Database URL (defaults to local SQLite file).
-# For Docker, set DATABASE_URL=sqlite:////data/ml_course.db and mount /data as a volume.
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ml_course.db")
+# Database URL (по умолчанию — PostgreSQL).
+# В Docker берите значение из переменной окружения DATABASE_URL (см. docker-compose.yml).
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5432/ml_course",
+)
 
 # Создаем engine
-connect_args = {}
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    # Нужно для SQLite
-    connect_args = {"check_same_thread": False}
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 # Создаем SessionLocal класс
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

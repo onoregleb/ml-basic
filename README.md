@@ -6,7 +6,7 @@ EN: An interactive machine learning course with theory, progress tracking, and s
 
 ## 🚀 Технологии / Tech stack
 
-- **Backend**: FastAPI + SQLAlchemy + SQLite
+- **Backend**: FastAPI + SQLAlchemy + PostgreSQL
 - **Frontend**: Next.js 14 + TypeScript + TailwindCSS (+ Typography)
 - **ML**: scikit-learn + numpy + pandas
 - **Charts**: Plotly.js (+ react-plotly.js)
