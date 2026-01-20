@@ -28,6 +28,11 @@ from project_regression import generate_regression_project_data
 
 router = APIRouter()
 
+# Важно: FastAPI по умолчанию редиректит со `/api/lessons` на `/api/lessons/`.
+# Если backend запущен в Docker, редирект может содержать Location вида `http://backend:8000/...`,
+# и браузер (внешний клиент) попытается открыть `backend:8000` напрямую → "Failed to fetch".
+# Поэтому делаем явный алиас без завершающего слеша.
+@router.get("", response_model=List[LessonSchema])
 @router.get("/", response_model=List[LessonSchema])
 def get_lessons(
     module_id: int = None,
