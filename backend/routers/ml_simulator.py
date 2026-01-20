@@ -142,13 +142,16 @@ async def logistic_regression_simulator(
     Симулятор логистической регрессии для бинарной классификации
     """
     # Генерируем данные
+    # В scikit-learn у make_classification нет параметра `noise`.
+    # Используем flip_y как "шум" (доля случайно перевёрнутых меток).
+    flip_y = float(np.clip(params.noise, 0.0, 1.0))
     X, y = make_classification(
         n_samples=params.n_samples,
         n_features=params.n_features,
         n_classes=params.n_classes,
         n_redundant=0,
         n_informative=params.n_features,
-        noise=params.noise,
+        flip_y=flip_y,
         random_state=params.random_state
     )
 
@@ -234,13 +237,14 @@ async def knn_classification_simulator(
         params = ClassificationParams()
 
     # Генерируем данные
+    flip_y = float(np.clip(params.noise, 0.0, 1.0))
     X, y = make_classification(
         n_samples=params.n_samples,
         n_features=params.n_features,
         n_classes=params.n_classes,
         n_redundant=0,
         n_informative=params.n_features,
-        noise=params.noise,
+        flip_y=flip_y,
         random_state=params.random_state
     )
 
