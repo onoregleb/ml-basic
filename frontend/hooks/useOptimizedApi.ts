@@ -172,7 +172,10 @@ export function useProgressData(lessonId: number | null) {
 }
 
 export function useAllLessons() {
-  return useOptimizedApi('/api/lessons', { 
+  // Важно: FastAPI роут `GET /api/lessons/` может делать редирект со слеша,
+  // а при reverse-proxy через Docker это иногда приводит к Location: http://backend:8000/...
+  // Поэтому используем завершающий слеш, чтобы не было 307/308 редиректов.
+  return useOptimizedApi('/api/lessons/', { 
     cache: true, 
     cacheTTL: 15 * 60 * 1000 // 15 минут кэш для списка уроков
   })
