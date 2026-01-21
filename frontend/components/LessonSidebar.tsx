@@ -1,7 +1,7 @@
 'use client'
 
 import React, { memo, useMemo } from 'react'
-import { Clock } from 'lucide-react'
+import { Hash, ChevronRight, Circle } from 'lucide-react'
 
 interface Lesson {
   id: number

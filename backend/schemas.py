@@ -106,9 +106,53 @@ class Submission(SubmissionBase):
     question_id: int
     is_correct: Optional[bool] = None
     submitted_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+# Quiz schemas
+class QuizQuestion(BaseModel):
+    id: int
+    question_text: str
+    question_type: str
+    options: Optional[List[str]] = None
+    points: int
+
+    class Config:
+        from_attributes = True
+
+
+class QuizAnswerSubmit(BaseModel):
+    question_id: int
+    answer: str
+
+
+class QuizSubmitRequest(BaseModel):
+    answers: List[QuizAnswerSubmit]
+
+
+class QuizAnswerResult(BaseModel):
+    question_id: int
+    is_correct: bool
+    correct_answer: str
+    user_answer: str
+
+
+class QuizSubmitResponse(BaseModel):
+    total_questions: int
+    correct_answers: int
+    score: float
+    passed: bool
+    results: List[QuizAnswerResult]
+
+
+class QuizProgressResponse(BaseModel):
+    lesson_id: int
+    has_attempted: bool
+    best_score: Optional[float] = None
+    last_attempt_at: Optional[datetime] = None
+    attempts_count: int = 0
 
 # ML Simulator schemas
 class LinearRegressionParams(BaseModel):
