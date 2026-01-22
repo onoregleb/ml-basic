@@ -1,10 +1,12 @@
 'use client'
 
-import React, { memo } from 'react'
+import React, { memo, lazy, Suspense } from 'react'
 import { BookOpen } from 'lucide-react'
 import RichTextRenderer from './RichTextRenderer'
 import LazySimulator from './LazySimulator'
 import ProjectSubmissionChecker from './ProjectSubmissionChecker'
+
+const Quiz = lazy(() => import('./Quiz'))
 
 interface Lesson {
   id: number
@@ -56,11 +58,16 @@ const LessonContent = memo(({ lesson }: LessonContentProps) => {
 
       {/* Интерактивные симуляторы */}
       {hasSimulator && (
-        <LazySimulator 
-          lessonId={lesson.id} 
+        <LazySimulator
+          lessonId={lesson.id}
           title={getSimulatorTitle(lesson.id)}
         />
       )}
+
+      {/* Квиз для проверки знаний */}
+      <Suspense fallback={<div className="card p-8 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div></div>}>
+        <Quiz lessonId={lesson.id} />
+      </Suspense>
 
       {/* Сдача проекта (только для финального урока) */}
       {isFinalProject && <ProjectSubmissionChecker lessonId={lesson.id} />}

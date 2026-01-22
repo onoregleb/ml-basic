@@ -3,12 +3,13 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
+import json
 
 import pandas as pd
 from sklearn.metrics import r2_score, mean_squared_error
 
 from database import get_db
-from models import Lesson, User, UserProgress
+from models import Lesson, User, UserProgress, Question, Submission
 from schemas import (
     Lesson as LessonSchema,
     LessonDetail as LessonDetailSchema,
@@ -20,6 +21,11 @@ from schemas import (
     RegressionProjectCheckResponse,
     RegressionProjectMetrics,
     UserProgress as UserProgressSchema,
+    QuizQuestion,
+    QuizSubmitRequest,
+    QuizSubmitResponse,
+    QuizAnswerResult,
+    QuizProgressResponse,
 )
 from routers.auth import get_current_user
 from markdown_utils import markdown_to_sanitized_html
@@ -486,5 +492,203 @@ async def check_project_submission_upload(
         metrics=metrics,
         llm=llm_resp,
         error=None,
+    )
+
+
+# ============== Quiz endpoints ==============
+
+@router.get("/{lesson_id}/quiz", response_model=List[QuizQuestion])
+def get_quiz_questions(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+):
+    """Получить вопросы квиза для урока (публичный эндпоинт)"""
+    if lesson_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid lesson ID")
+
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.is_active == True).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    questions = db.query(Question).filter(Question.lesson_id == lesson_id).all()
+
+    result = []
+    for q in questions:
+        options = None
+        if q.options:
+            try:
+                options = json.loads(q.options)
+            except json.JSONDecodeError:
+                options = None
+
+        result.append(QuizQuestion(
+            id=q.id,
+            question_text=q.question_text,
+            question_type=q.question_type,
+            options=options,
+            points=q.points,
+        ))
+
+    return result
+
+
+@router.post("/{lesson_id}/quiz/submit", response_model=QuizSubmitResponse)
+def submit_quiz(
+    lesson_id: int,
+    payload: QuizSubmitRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Отправить ответы на квиз"""
+    if lesson_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid lesson ID")
+
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.is_active == True).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    questions = db.query(Question).filter(Question.lesson_id == lesson_id).all()
+    if not questions:
+        raise HTTPException(status_code=404, detail="No questions found for this lesson")
+
+    questions_map = {q.id: q for q in questions}
+
+    results = []
+    correct_count = 0
+
+    for answer in payload.answers:
+        question = questions_map.get(answer.question_id)
+        if not question:
+            continue
+
+        user_answer = answer.answer.strip().lower()
+        correct_answer = question.correct_answer.strip().lower()
+        is_correct = user_answer == correct_answer
+
+        if is_correct:
+            correct_count += 1
+
+        # Сохраняем submission
+        submission = Submission(
+            user_id=current_user.id,
+            question_id=answer.question_id,
+            answer=answer.answer,
+            is_correct=is_correct,
+        )
+        db.add(submission)
+
+        results.append(QuizAnswerResult(
+            question_id=answer.question_id,
+            is_correct=is_correct,
+            correct_answer=question.correct_answer,
+            user_answer=answer.answer,
+        ))
+
+    total_questions = len(questions)
+    score = (correct_count / total_questions * 100) if total_questions > 0 else 0
+    passed = score >= 70
+
+    db.commit()
+
+    # Обновляем прогресс урока
+    try:
+        progress = db.query(UserProgress).filter(
+            UserProgress.user_id == current_user.id,
+            UserProgress.lesson_id == lesson_id,
+        ).first()
+
+        new_status = "completed" if passed else "in_progress"
+
+        if progress:
+            # Обновляем только если новый результат лучше или статус выше
+            if score > progress.score or (new_status == "completed" and progress.status != "completed"):
+                progress.score = max(progress.score, score)
+                if passed:
+                    progress.status = "completed"
+                    progress.completed_at = datetime.utcnow()
+        else:
+            progress = UserProgress(
+                user_id=current_user.id,
+                lesson_id=lesson_id,
+                status=new_status,
+                score=score,
+                completed_at=datetime.utcnow() if passed else None,
+            )
+            db.add(progress)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    return QuizSubmitResponse(
+        total_questions=total_questions,
+        correct_answers=correct_count,
+        score=score,
+        passed=passed,
+        results=results,
+    )
+
+
+@router.get("/{lesson_id}/quiz/progress", response_model=QuizProgressResponse)
+def get_quiz_progress(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Получить прогресс квиза пользователя"""
+    if lesson_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid lesson ID")
+
+    # Получаем все submissions пользователя для этого урока
+    questions = db.query(Question).filter(Question.lesson_id == lesson_id).all()
+    question_ids = [q.id for q in questions]
+
+    if not question_ids:
+        return QuizProgressResponse(
+            lesson_id=lesson_id,
+            has_attempted=False,
+            best_score=None,
+            last_attempt_at=None,
+            attempts_count=0,
+        )
+
+    submissions = db.query(Submission).filter(
+        Submission.user_id == current_user.id,
+        Submission.question_id.in_(question_ids),
+    ).order_by(Submission.submitted_at.desc()).all()
+
+    if not submissions:
+        return QuizProgressResponse(
+            lesson_id=lesson_id,
+            has_attempted=False,
+            best_score=None,
+            last_attempt_at=None,
+            attempts_count=0,
+        )
+
+    # Подсчитываем количество попыток (каждый полный сет ответов = 1 попытка)
+    # Упрощенно: считаем количество уникальных timestamps (с точностью до секунды)
+    unique_times = set()
+    for s in submissions:
+        if s.submitted_at:
+            unique_times.add(s.submitted_at.replace(microsecond=0))
+
+    attempts_count = len(unique_times) if unique_times else 1
+
+    # Получаем лучший результат из прогресса урока
+    progress = db.query(UserProgress).filter(
+        UserProgress.user_id == current_user.id,
+        UserProgress.lesson_id == lesson_id,
+    ).first()
+
+    best_score = progress.score if progress else None
+    last_attempt_at = submissions[0].submitted_at if submissions else None
+
+    return QuizProgressResponse(
+        lesson_id=lesson_id,
+        has_attempted=True,
+        best_score=best_score,
+        last_attempt_at=last_attempt_at,
+        attempts_count=attempts_count,
     )
 
