@@ -145,6 +145,20 @@ const LessonNavigation = memo(({
 })
 LessonNavigation.displayName = 'LessonNavigation'
 
+// Функция для очистки текста от всех эмодзи
+const cleanText = (text: string): string => {
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '')
+    .trim()
+}
+
+// Обрезка текста до максимальной длины
+const truncateText = (text: string, maxLength: number = 35): string => {
+  const cleaned = cleanText(text)
+  if (cleaned.length <= maxLength) return cleaned
+  return cleaned.substring(0, maxLength - 1) + '…'
+}
+
 // Компонент содержания урока (из backend toc)
 const TableOfContents = memo(({ toc }: { toc?: Array<{ level: number; text: string; id: string }> }) => {
   const tableOfContents = useMemo(() => toc || [], [toc])
@@ -153,15 +167,18 @@ const TableOfContents = memo(({ toc }: { toc?: Array<{ level: number; text: stri
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Содержание урока</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <Hash className="h-4 w-4 mr-2 text-primary-600" />
+        Содержание
+      </h3>
       <div className="space-y-1">
         {tableOfContents.map((item, index) => (
           <div
             key={index}
-            className={`text-sm hover:text-blue-600 cursor-pointer transition-colors ${
+            className={`flex items-center text-sm hover:text-blue-600 cursor-pointer transition-colors py-1 ${
               item.level === 1 ? 'font-semibold text-gray-900' :
-              item.level === 2 ? 'font-medium text-gray-700 ml-3' :
-              'text-gray-600 ml-6'
+              item.level === 2 ? 'font-medium text-gray-700 pl-3' :
+              'text-gray-600 pl-6'
             }`}
             onClick={() => {
               const element = document.getElementById(item.id)
@@ -169,8 +186,14 @@ const TableOfContents = memo(({ toc }: { toc?: Array<{ level: number; text: stri
                 element.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
             }}
+            title={cleanText(item.text)}
           >
-            {item.text.replace(/[🚀🎯📊🔍🎨⚖️🛠️🚨💡🎓]/g, '').trim()}
+            {item.level === 1 ? (
+              <ChevronRight className="h-3 w-3 mr-1.5 flex-shrink-0" />
+            ) : (
+              <Circle className="h-1.5 w-1.5 mr-2 flex-shrink-0 fill-current" />
+            )}
+            <span className="truncate">{truncateText(item.text)}</span>
           </div>
         ))}
       </div>
